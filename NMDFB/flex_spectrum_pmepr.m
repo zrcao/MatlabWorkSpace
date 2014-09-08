@@ -100,12 +100,14 @@ end
 %% Monte Carlo Setups
 bitsPerSymb_vec = [2, 4, 6, 8, 10];
 qamOptions = length(bitsPerSymb_vec);
+% Change this when use different number of segments.
 numSpace = 6;
-pmepr_continuous = zeros(qamOptions, numSpace);
-pmepr_fragmented = zeros(qamOptions, numSpace);
 
-mc = 1;
+mc = 100;
+pmepr_continuous = zeros(qamOptions, numSpace, mc);
+pmepr_fragmented = zeros(qamOptions, numSpace, mc);
 for bb = 1:qamOptions
+    display(['Now running ' num2str(bitsPerSymb_vec(bb)) ' bits per symbol.']);
     %% QAM Modulation Setup
     bitsPerSymb = bitsPerSymb_vec(bb);
     numBits = numSymbs*bitsPerSymb;
@@ -131,15 +133,15 @@ for bb = 1:qamOptions
             %meanSigPW = mean(abs(txsigPW(filt_order/2+(1:symbsLen*os))));
             maxSigPW = max(txsigPW);
             % Note that the mean power is 1.
-            pmepr_continuous(bb, ss) = pmepr_continuous(bb, ss) + maxSigPW;
+            pmepr_continuous(bb, ss, mm) = maxSigPW;
                  
             %% Padding txsigs
             length_padding = ceil(0.5*...
                 (length_analysis_filter + length_synthesis_filter));
-            txsig = [txsig; zeros(length_padding, 1)];
+            paddedtxsig = [txsig; zeros(length_padding, 1)];
             
             %% NMDFB Filters
-            analysis_output = polyphaseFBDS(txsig, analysis_filter, ds, M);
+            analysis_output = polyphaseFBDS(paddedtxsig, analysis_filter, ds, M);
             synthesis_input = zeros(size(analysis_output));
             synthesis_input(:, mapping(:, 2)) = ...
                 analysis_output(:, mapping(:, 1));
@@ -147,13 +149,10 @@ for bb = 1:qamOptions
 
             txwavePW = abs(txwave(length_padding+(1:numSymbs*os-100))).^2;
             maxPW = max(txwavePW);
-            pmepr_fragmented(bb, ss) = pmepr_fragmented(bb, ss) + maxPW;           
+            pmepr_fragmented(bb, ss, mm) = maxPW;           
         end
     end
 end
-pmepr_continuous = 10*log10(pmepr_continuous/mc);
-pmepr_fragmented = 10*log10(pmepr_fragmented/mc);
 
-% save('pmepr.mat', 'pmepr_continuous', 'pmepr_fragmented');
-
+save('pmepr_bin2.mat', 'pmepr_continuous', 'pmepr_fragmented');
 rmpath(libpath);
