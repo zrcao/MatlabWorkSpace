@@ -103,7 +103,7 @@ qamOptions = length(bitsPerSymb_vec);
 % Change this when use different number of segments.
 numSpace = 3;
 
-mc = 100;
+mc = 1000;
 pmepr_continuous = zeros(qamOptions, numSpace, mc);
 pmepr_fragmented = zeros(qamOptions, numSpace, mc);
 for bb = 1:qamOptions
@@ -154,5 +154,5 @@ for bb = 1:qamOptions
     end
 end
 
-save('pmepr_bin13.mat', 'pmepr_continuous', 'pmepr_fragmented');
+save('pmepr_bin13_mc1000.mat', 'pmepr_continuous', 'pmepr_fragmented');
 rmpath(libpath);
