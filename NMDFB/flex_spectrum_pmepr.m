@@ -101,7 +101,7 @@ end
 bitsPerSymb_vec = [2, 4, 6, 8, 10];
 qamOptions = length(bitsPerSymb_vec);
 % Change this when use different number of segments.
-numSpace = 3;
+numSpace = 6;
 
 mc = 1000;
 pmepr_continuous = zeros(qamOptions, numSpace, mc);
@@ -117,7 +117,7 @@ for bb = 1:qamOptions
     qam_table = gen_recqam_table(I_mapping, Q_mapping);
     
     for ss = 1:numSpace
-        mapping = mappings{4, ss};
+        mapping = mappings{1, ss};
         for mm = 1:mc
             %% Generate random bits
             bits = bitgen('rand', numBits);
@@ -154,5 +154,5 @@ for bb = 1:qamOptions
     end
 end
 
-save('pmepr_bin13_mc1000.mat', 'pmepr_continuous', 'pmepr_fragmented');
+save('pmepr_bin2_mc1000.mat', 'pmepr_continuous', 'pmepr_fragmented');
 rmpath(libpath);
