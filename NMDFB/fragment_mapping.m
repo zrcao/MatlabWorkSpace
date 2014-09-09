@@ -58,6 +58,8 @@ mappings{1, 6} = [sig_pos bin_pos];
 
 %% 4 segments
 
+
+
 %% 8 segments
 
 %% 13 segments, the fourth row of the mappings cell. 
