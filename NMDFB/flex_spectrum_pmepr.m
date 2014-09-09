@@ -100,59 +100,68 @@ end
 %% Monte Carlo Setups
 bitsPerSymb_vec = [2, 4, 6, 8, 10];
 qamOptions = length(bitsPerSymb_vec);
-% Change this when use different number of segments.
-numSpace = 6;
+segments = [2 4 8 13];
+numSegments = length(segments);
+spaces = [6 5 4 3];
 
 mc = 1000;
-pmepr_continuous = zeros(qamOptions, numSpace, mc);
-pmepr_fragmented = zeros(qamOptions, numSpace, mc);
-for bb = 1:qamOptions
-    display(['Now running ' num2str(bitsPerSymb_vec(bb)) ' bits per symbol.']);
-    %% QAM Modulation Setup
-    bitsPerSymb = bitsPerSymb_vec(bb);
-    numBits = numSymbs*bitsPerSymb;
-    % Generate QAM symbol table using gen_recqam_table.m
-    I_mapping = (graycode(bitsPerSymb/2))';
-    Q_mapping = flipud(graycode(bitsPerSymb/2));
-    qam_table = gen_recqam_table(I_mapping, Q_mapping);
-    
-    for ss = 1:numSpace
-        mapping = mappings{1, ss};
-        for mm = 1:mc
-            %% Generate random bits
-            bits = bitgen('rand', numBits);
-            %% bits for QAM modulation then waveform generation
-            symb_index = sum(mprod(...
-                reshape(bits, bitsPerSymb, numBits/bitsPerSymb...
-                ), 2.^(bitsPerSymb-1:-1:0)'), 1);
-            symbs = qam_table(symb_index+1, 2);
-            symbsLen = length(symbs);
-            txsig = conv(shaping_filter, upsample(symbs, os)*os);
-            
-            txsigPW = abs(txsig(halfL_shaping_filter+(1:numSymbs*os))).^2;
-            %meanSigPW = mean(abs(txsigPW(filt_order/2+(1:symbsLen*os))));
-            maxSigPW = max(txsigPW);
-            % Note that the mean power is 1.
-            pmepr_continuous(bb, ss, mm) = maxSigPW;
-                 
-            %% Padding txsigs
-            length_padding = ceil(0.5*...
-                (length_analysis_filter + length_synthesis_filter));
-            paddedtxsig = [txsig; zeros(length_padding, 1)];
-            
-            %% NMDFB Filters
-            analysis_output = polyphaseFBDS(paddedtxsig, analysis_filter, ds, M);
-            synthesis_input = zeros(size(analysis_output));
-            synthesis_input(:, mapping(:, 2)) = ...
-                analysis_output(:, mapping(:, 1));
-            txwave = polyphaseFBUS(synthesis_input, synthesis_filter, ds);
 
-            txwavePW = abs(txwave(length_padding+(1:numSymbs*os-100))).^2;
-            maxPW = max(txwavePW);
-            pmepr_fragmented(bb, ss, mm) = maxPW;           
+for seg = 1:numSegments
+    numSpace = spaces(seg);
+    pmepr_continuous = zeros(qamOptions, numSpace, mc);
+    pmepr_fragmented = zeros(qamOptions, numSpace, mc);
+
+    for bb = 1:qamOptions
+        display(['Now running ' num2str(bitsPerSymb_vec(bb)) ...
+            ' bits per symbol' ' for ' num2str(segments(seg)) ...
+            ' segments fragmentation.']);
+        %% QAM Modulation Setup
+        bitsPerSymb = bitsPerSymb_vec(bb);
+        numBits = numSymbs*bitsPerSymb;
+        % Generate QAM symbol table using gen_recqam_table.m
+        I_mapping = (graycode(bitsPerSymb/2))';
+        Q_mapping = flipud(graycode(bitsPerSymb/2));
+        qam_table = gen_recqam_table(I_mapping, Q_mapping);
+
+        for ss = 1:numSpace
+            mapping = mappings{1, ss};
+            for mm = 1:mc
+                %% Generate random bits
+                bits = bitgen('rand', numBits);
+                %% bits for QAM modulation then waveform generation
+                symb_index = sum(mprod(...
+                    reshape(bits, bitsPerSymb, numBits/bitsPerSymb...
+                    ), 2.^(bitsPerSymb-1:-1:0)'), 1);
+                symbs = qam_table(symb_index+1, 2);
+                symbsLen = length(symbs);
+                txsig = conv(shaping_filter, upsample(symbs, os)*os);
+
+                txsigPW = abs(txsig(halfL_shaping_filter+(1:numSymbs*os))).^2;
+                %meanSigPW = mean(abs(txsigPW(filt_order/2+(1:symbsLen*os))));
+                maxSigPW = max(txsigPW);
+                % Note that the mean power is 1.
+                pmepr_continuous(bb, ss, mm) = maxSigPW;
+
+                %% Padding txsigs
+                length_padding = ceil(0.5*...
+                    (length_analysis_filter + length_synthesis_filter));
+                paddedtxsig = [txsig; zeros(length_padding, 1)];
+
+                %% NMDFB Filters
+                analysis_output = polyphaseFBDS(paddedtxsig, analysis_filter, ds, M);
+                synthesis_input = zeros(size(analysis_output));
+                synthesis_input(:, mapping(:, 2)) = ...
+                    analysis_output(:, mapping(:, 1));
+                txwave = polyphaseFBUS(synthesis_input, synthesis_filter, ds);
+
+                txwavePW = abs(txwave(length_padding+(1:numSymbs*os-100))).^2;
+                maxPW = max(txwavePW);
+                pmepr_fragmented(bb, ss, mm) = maxPW;           
+            end
         end
     end
+    filename = ['pmepr_seg' num2str(segments(seg)) '_mc' num2str(mc) '.mat'];
+    save(filename, 'pmepr_continuous', 'pmepr_fragmented');
 end
 
-save('pmepr_bin2_mc1000.mat', 'pmepr_continuous', 'pmepr_fragmented');
 rmpath(libpath);

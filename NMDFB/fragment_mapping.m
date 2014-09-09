@@ -137,7 +137,3 @@ bin_pos = flatten(mplus((0:12)'*18+1, 0:4)');
 bin_pos = [0; bin_pos; max(bin_pos)+1;]-111;
 bin_pos = sort(bin_pos + (bin_pos<0)*256)+1;
 mappings{4, 3} = [sig_pos bin_pos];
-
-
-
-
