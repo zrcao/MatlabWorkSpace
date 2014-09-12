@@ -93,11 +93,12 @@ C1= mprod(log2(1+mprod(10.^(snr/10), 1./(beta.^2))), 1./(1+alpha/2));
 C2= mprod(log2(1+mprod(10.^(snr/10), 1./((1-beta).^2))), 1./(1+alpha/2));
 R = mprod(C1/2, 1./C);
 
-figure(6);hold on;
+figure(6);
 idx = sum(((R-1)<=0), 2)+1;
 val = sum(idx>length(alpha));
 plot(snr(1:length(snr)-val), alpha(idx(1:length(snr)-val)), '-b', ...
     'LineWidth', 2);
+hold on;
 
 idx = sum(((R-1.25)<=0), 2)+1;
 val = sum(idx>length(alpha));
