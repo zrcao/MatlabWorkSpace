@@ -84,5 +84,41 @@ set(haxes3a, 'XTickLabel', {'150', '300', '450', '600', '750', ...
     '900', '1050', '1200'}, 'FontSize', fontsz);
 xlabel(haxes3a, 'Maximum Range (km)', 'FontSize', fontsz+4);
 
+%%
+snr = (0:0.01:15)'; % 
+alpha = 0:0.01:3; % Guard time versus transmission time
+beta = 0.5;
+C = mprod(log2(1+10.^(snr/10)), 1./(1+alpha));
+C1= mprod(log2(1+mprod(10.^(snr/10), 1./(beta.^2))), 1./(1+alpha/2));
+C2= mprod(log2(1+mprod(10.^(snr/10), 1./((1-beta).^2))), 1./(1+alpha/2));
+R = mprod(C1/2, 1./C);
+
+figure(6);hold on;
+idx = sum(((R-1)<=0), 2)+1;
+val = sum(idx>length(alpha));
+plot(snr(1:length(snr)-val), alpha(idx(1:length(snr)-val)), '-b', ...
+    'LineWidth', 2);
+
+idx = sum(((R-1.25)<=0), 2)+1;
+val = sum(idx>length(alpha));
+plot(snr(1:length(snr)-val), alpha(idx(1:length(snr)-val)), '--r', ...
+    'LineWidth', 2);
+
+idx = sum(((R-1.5)<=0), 2)+1;
+val = sum(idx>length(alpha));
+plot(snr(1:length(snr)-val), alpha(idx(1:length(snr)-val)), ':k', ...
+    'LineWidth', 2);
+
+idx = sum(((R-1.75)<=0), 2)+1;
+val = sum(idx>length(alpha));
+plot(snr(1:length(snr)-val), alpha(idx(1:length(snr)-val)), '-.g', ...
+    'LineWidth', 2);
+axis([0, 15, 0, 3]);
+xlabel('Direct Link SNR (dB)', 'FontSize', fontsz);
+ylabel('Ratio of Guard Interval over Transmission Time', 'FontSize', fontsz);
+ll= legend('Has Gain', '25% Gain', '50% Gain', '75% Gain');
+set(ll, 'FontSize', fontsz);
+title('Airborne Link Cooperative Relay Gain Range', 'FontSize', fontsz);
+
 %% Remove path
 % rmpath(libpath);
