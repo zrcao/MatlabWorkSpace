@@ -11,10 +11,10 @@ end
 fontsz = 14;
 
 %% Results to be processed
-filenames = {'pmepr_bin13.mat', 3;
-             'pmepr_bin13_mc1000.mat', 3;
-             'pmepr_bin2.mat', 6;
-             'pmepr_bin2_mc1000.mat', 6};
+filenames = {'pmepr_seg2_mc1000.mat', 6;
+             'pmepr_seg4_mc1000.mat', 5;
+             'pmepr_seg8_mc1000.mat', 4;
+             'pmepr_seg13_mc1000.mat', 3};
 
 %%
 space = {'500 kHz', '2 MHz', '5 MHz', '10 MHz', '20 MHz', '50 MHz'};
@@ -25,7 +25,7 @@ markercolor = {'b', 'k', 'm', 'r', 'g', 'c'};
 
          
 %% 
-for ff = 2:2:4
+for ff = 1:4
     load(filenames{ff, 1});
     figure((ff-1)*10+1);
     for oo = 1:qamoptions
@@ -38,14 +38,15 @@ for ff = 2:2:4
             'LineWidth', 1);
         hold on;
     end
-    switch ff
-        case 2
-            axis([0.7, filenames{ff, 2}+.3, 6.6, 8]);
-        case 4
-            axis([0.7, filenames{ff, 2}+.3, 5.6, 8]);       
-    end
-    
-    
+    axis([0.7, filenames{ff, 2}+.3, 5.8, 8]);
+    grid on;
+%     switch ff
+%         case 2
+%             axis([0.7, filenames{ff, 2}+.3, 6.6, 8]);
+%         case 4
+%             axis([0.7, filenames{ff, 2}+.3, 5.6, 8]);       
+%     end
+ 
     set(gca, 'XTick', 1:filenames{ff,2});
     set(gca, 'XTickLabel', space(1:filenames{ff, 2}), 'FontSize', fontsz);
     xlabel('Frequency Spacing Between Neighboring Segments', 'FontSize', fontsz);
@@ -79,6 +80,7 @@ for ff = 2:2:4
     xlabel('QAM Modulation Order', 'FontSize', fontsz);
     ylabel('Peak-to-Mean Envelope Power Ratio (PMEPR) (dB)', 'FontSize', fontsz);
     title('20 MHz Signal Equally divided into 13 Segments');
+    grid on;
 end
 
 
