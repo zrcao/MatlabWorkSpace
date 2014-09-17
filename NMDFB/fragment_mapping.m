@@ -61,7 +61,12 @@ mappings{2, 1} = [sig_pos bin_pos];
 
 % 6 channel spacing
 bin_pos = flatten(mplus((0:3)'*(17+6), 0:16)');
-bin_pos = bin_pos(2:end) - 23;
+bin_pos = bin_pos(2:end) - 43;
+
+figure(9);
+stem(bin_pos, ones(length(bin_pos), 1));
+axis([-128, 127, -0.1, 2]);
+
 bin_pos = sort(bin_pos + (bin_pos<0)*256)+1;
 mappings{2, 2} = [sig_pos bin_pos];
 
