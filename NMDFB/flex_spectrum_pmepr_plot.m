@@ -11,10 +11,10 @@ end
 fontsz = 14;
 
 %% Results to be processed
-filenames = {'pmepr_seg2_mc1000.mat', 6;
-             'pmepr_seg4_mc1000.mat', 5;
-             'pmepr_seg8_mc1000.mat', 4;
-             'pmepr_seg13_mc1000.mat', 3};
+filenames = {'pmepr_seg2_mc1000.mat', 6, 2;
+             'pmepr_seg4_mc1000.mat', 5, 4;
+             'pmepr_seg8_mc1000.mat', 4, 8;
+             'pmepr_seg13_mc1000.mat', 3, 13};
 
 %%
 space = {'500 kHz', '2 MHz', '5 MHz', '10 MHz', '20 MHz', '50 MHz'};
@@ -53,7 +53,8 @@ for ff = 1:4
     ylabel('Peak-to-Mean Envelope Power Ratio (PMEPR) (dB)', 'FontSize', fontsz);
     ll = legend(qam, 'Location', 'SouthEast');
     set(ll, 'FontSize', fontsz);
-    title('Average PMEPR (20 MHz Signal Equally divided into 13 Segments)');
+    title(['Average PMEPR (20 MHz Signal Equally divided into ', ...
+        num2str(filenames{ff, 3}) ' Segments)']);
 
     figure((ff-1)*10+2);
     plot(1:5, 10*log10(mean(mean(pmepr_continuous, 3), 2)), '-bd', ...
@@ -79,18 +80,7 @@ for ff = 1:4
     set(ll, 'FontSize', fontsz);
     xlabel('QAM Modulation Order', 'FontSize', fontsz);
     ylabel('Peak-to-Mean Envelope Power Ratio (PMEPR) (dB)', 'FontSize', fontsz);
-    title('20 MHz Signal Equally divided into 13 Segments');
+    title(['20 MHz Signal Equally divided into ', ...
+        num2str(filenames{ff, 3}), ' Segments']);
     grid on;
 end
-
-
-load('pmepr_bin2.mat');
-
-figure(2);hold on;
-plot([1:5], 10*log10(mean(mean(pmepr_continuous, 3), 2)), '*');
-plot([1:5], 10*log10(max(max(pmepr_continuous, [], 3), [], 2)), 's'); 
-set(gca, 'XTick', [1:5]);
-set(gca, 'XTickLabel', [1:5]);
-
-plot([1:5], 10*log10(mean(pmepr_fragmented, 3)));
-plot([1:5], 10*log10(max(pmepr_fragmented, [], 3)), '^');

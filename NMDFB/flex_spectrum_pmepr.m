@@ -9,9 +9,11 @@ for hh = 1:length(h_fig)
     figure(h_fig(hh));clf;
 end
 
-debug = 0;
+debug = 1;
 verbose = 0;
+datasave = 0;
 fontsz = 14;
+spectrum_fig = 0;
 
 % For pwelch();
 winL = 4096;
@@ -52,7 +54,7 @@ analysis_filter = [0; flatten(kaiser_coef, 1)];
 length_analysis_filter = length(analysis_filter);
 halfL_analysis_filter = length_analysis_filter/2;
 
-if debug
+if debug && verbose
     figure(2);hold on;
     for mm = -2:2:2
         zisfilter = analysis_filter.*...
@@ -90,7 +92,7 @@ end
 synthesis_filter = ff;
 length_synthesis_filter = length(synthesis_filter);
 
-if debug
+if debug && verbose
     figure(3);
     plot((-0.5:1/fftsz:0.5-1/fftsz)*M, ...
         20*log10(fftshift(abs(fft(synthesis_filter,fftsz)))), 'r');
@@ -104,7 +106,7 @@ segments = [2 4 8 13];
 numSegments = length(segments);
 spaces = [6 5 4 3];
 
-mc = 1000;
+mc = 1;
 
 for seg = 1:numSegments
     numSpace = spaces(seg);
@@ -124,7 +126,7 @@ for seg = 1:numSegments
         qam_table = gen_recqam_table(I_mapping, Q_mapping);
 
         for ss = 1:numSpace
-            mapping = mappings{1, ss};
+            mapping = mappings{seg, ss};
             for mm = 1:mc
                 %% Generate random bits
                 bits = bitgen('rand', numBits);
@@ -158,10 +160,34 @@ for seg = 1:numSegments
                 maxPW = max(txwavePW);
                 pmepr_fragmented(bb, ss, mm) = maxPW;           
             end
+            
+            if debug && bb==1
+                %% Spectrum of generated signals
+                [Pxx, W] = pwelch(...
+                    txwave(length_padding+(1:numSymbs*os-100)), win, ...
+                    fftsz/2, fftsz, Fs);
+                idx = seg*100+ss;
+                hfig = figure(idx);
+                if ~ismember(idx, h_fig)
+                    set(hfig, 'Position', [-1080, 0, 560, 140]);
+                end
+                W = fftshift(W - (W >= Fs/2)*Fs);
+                Pxx = 10*log10(Pxx);
+                Pxx = fftshift(Pxx - max(Pxx));
+                plot(W, Pxx);
+                grid on;
+                xlabel('Frequency (MHz)', 'FontSize', fontsz);
+                ylabel('PSD (dB/Hz)', 'FontSize', fontsz);
+                title('Basedband PSD of Fragmented Transmitted Signals',...
+                    'FontSize', fontsz); 
+                axis([-50, 50, -150, 10]);
+            end
         end
     end
     filename = ['pmepr_seg' num2str(segments(seg)) '_mc' num2str(mc) '.mat'];
-    save(filename, 'pmepr_continuous', 'pmepr_fragmented');
+    if datasave
+        save(filename, 'pmepr_continuous', 'pmepr_fragmented');
+    end
 end
 
 rmpath(libpath);
