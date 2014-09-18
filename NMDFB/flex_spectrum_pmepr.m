@@ -105,6 +105,8 @@ qamOptions = length(bitsPerSymb_vec);
 segments = [2 4 8 13];
 numSegments = length(segments);
 spaces = [6 5 4 3];
+spaceStr = {'500kHz', '2MHz', '5MHz', '10MHz', '20MHz', '50MHz'};
+
 
 mc = 1;
 
@@ -169,7 +171,7 @@ for seg = 1:numSegments
                 idx = seg*100+ss;
                 hfig = figure(idx);
                 if ~ismember(idx, h_fig)
-                    set(hfig, 'Position', [-1080, 0, 560, 140]);
+                    set(hfig, 'Position', [0, 0, 560, 140]);
                 end
                 W = fftshift(W - (W >= Fs/2)*Fs);
                 Pxx = 10*log10(Pxx);
@@ -178,9 +180,12 @@ for seg = 1:numSegments
                 grid on;
                 xlabel('Frequency (MHz)', 'FontSize', fontsz);
                 ylabel('PSD (dB/Hz)', 'FontSize', fontsz);
-                title('Basedband PSD of Fragmented Transmitted Signals',...
-                    'FontSize', fontsz); 
+                title([num2str(segments(seg)) ' Segments with ' spaceStr{ss}, ...
+                    ' Spacing'], 'FontSize', fontsz); 
                 axis([-50, 50, -150, 10]);
+                figname = ['seg', num2str(segments(seg)), '_', spaceStr{ss}, ...
+                    '.pdf'];
+                saveTightFigure(hfig, figname);
             end
         end
     end

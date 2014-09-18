@@ -38,7 +38,7 @@ for ff = 1:4
             'LineWidth', 1);
         hold on;
     end
-    axis([0.7, filenames{ff, 2}+.3, 5.8, 8]);
+    axis([0.7, filenames{ff, 2}+.3, 5.8, 8.2]);
     grid on;
 %     switch ff
 %         case 2
@@ -53,7 +53,7 @@ for ff = 1:4
     ylabel('Peak-to-Mean Envelope Power Ratio (PMEPR) (dB)', 'FontSize', fontsz);
     ll = legend(qam, 'Location', 'SouthEast');
     set(ll, 'FontSize', fontsz);
-    title(['Average PMEPR (20 MHz Signal Equally divided into ', ...
+    title(['Average PMEPR (20 MHz Signal Equally Divided into ', ...
         num2str(filenames{ff, 3}) ' Segments)']);
 
     figure((ff-1)*10+2);
@@ -80,7 +80,7 @@ for ff = 1:4
     set(ll, 'FontSize', fontsz);
     xlabel('QAM Modulation Order', 'FontSize', fontsz);
     ylabel('Peak-to-Mean Envelope Power Ratio (PMEPR) (dB)', 'FontSize', fontsz);
-    title(['20 MHz Signal Equally divided into ', ...
+    title(['20 MHz Signal Equally Divided into ', ...
         num2str(filenames{ff, 3}), ' Segments']);
     grid on;
 end
