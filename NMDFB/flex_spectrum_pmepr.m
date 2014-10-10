@@ -12,6 +12,7 @@ end
 debug = 1;
 verbose = 0;
 datasave = 0;
+txsamplesave = 1;
 fontsz = 14;
 spectrum_fig = 0;
 
@@ -157,6 +158,13 @@ for seg = 1:numSegments
                 synthesis_input(:, mapping(:, 2)) = ...
                     analysis_output(:, mapping(:, 1));
                 txwave = polyphaseFBUS(synthesis_input, synthesis_filter, ds);
+                
+                if txsamplesave
+                    filename = ['seg-' num2str(segments(seg)) '_space-' ...
+                        spaceStr{ss} '_bit-' bitsPerSymb, '-', ...
+                        num2str(mc) '.mat'];
+                    save(filename, 'txsig', 'txwave');
+                end
 
                 txwavePW = abs(txwave(length_padding+(1:numSymbs*os-100))).^2;
                 maxPW = max(txwavePW);
