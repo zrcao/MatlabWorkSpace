@@ -9,7 +9,7 @@ libpath = genpath('../Lib');
 addpath(libpath);
 
 debug = 1;
-verbose = 0;
+verbose = 1;
 fontsz = 14;
 
 % For pwelch();
@@ -18,19 +18,49 @@ fftsz = winL;
 win = kaiser(winL, 15);
 win = win/sum(win);
 
-%% Generate random bits
-numBits = 8192*3*5;
-bits = bitgen('rand', numBits);
-
 %% QAM Modulation Setup
-bitsPerSymb = 4; % QAM order (4, 16, 64, 256)
-% Generate QAM symbol table using gen_recqam_table.m
+loop = 1;
+while loop
+    bitsPerSymb = input(['How many bits per symbol? \n' ...
+                         '1 - BPSK \n' ...
+                         '2 - QPSK \n' ...
+                         '4 - 16QAM \n' ...
+                         '6 - 64QAM \n' ...
+                         '8 - 512QAM \n' ...
+                         '10- 1024QAM \n'...
+                         'Please provide your option here -- ']);
+    if ~ismember(bitsPerSymb, [1 2 4 6 8 10])
+        display('Invalid option! Please try again!');
+    else
+        loop = 0;
+    end
+end
+
+%% Number of symbols
+loop = 1;
+while loop
+    symbsLen = input('How many symbols you would like to generate? [8192]');
+    if isempty(symbsLen)
+        symbsLen=8192;
+    end
+    if symbsLen<8192
+        display('The minimum length of symbols is 8192! Please try again!');
+    else
+        loop = 0;
+    end
+end
+%bitsPerSymb = 4; % QAM order (4, 16, 64, 256)
+%% Generate QAM symbol table using gen_recqam_table.m
 I_mapping = (graycode(bitsPerSymb/2))';
 Q_mapping = flipud(graycode(bitsPerSymb/2));
 qam_table = gen_recqam_table(I_mapping, Q_mapping);
 
+%% Generate random bits
+numBits = symbsLen*bitsPerSymb;
+bits = bitgen('rand', numBits);
+
 %% Prepare bits for QAM modulation
-symb_index = sum(mprod(reshape(bits, bitsPerSymb, numBits/bitsPerSymb), ...
+symb_index = sum(mprod(reshape(bits, bitsPerSymb, symbsLen), ...
     2.^(bitsPerSymb-1:-1:0)'), 1);
 symbs = qam_table(symb_index+1, 2);
 symbsLen = length(symbs);
@@ -159,15 +189,96 @@ plot((-0.5:1/fftsz:0.5-1/fftsz)*M,20*log10(fftshift(abs(fft(ff,fftsz)))), 'r');
 text(1, 5, 'Red: Synthesis Filter', 'FontSize', fontsz, 'Color', 'r');
 
 %% Analysis Filters
-analysis_output = polyphaseFBDS(txsig, filter_coef, ds, M);
+txsigpad = [txsig; zeros(fir_length, 1)];
+analysis_output = polyphaseFBDS(txsigpad, filter_coef, ds, M);
 
 %% Mapping
 fragment_mapping;
+
+loop = 1;
+while loop
+    numSegs = input(['How many segments? \n' ...
+                         '1 -  2 Segments \n' ...
+                         '2 -  4 Segments \n' ...
+                         '3 -  8 Segments \n' ...
+                         '4 - 13 segments \n' ...
+                         'Please provide your option here -- ']);
+    if ~ismember(numSegs, [1 2 3 4])
+        display('Invalid option! Please try again!');
+    else
+        loop = 0;
+    end
+end
+
+loop = 1;
+switch numSegs
+    case 1
+        while loop
+            space = input(['Please choose the spacing between segments? \n' ...
+                         '1 -  500 kHz\n' ...
+                         '2 -    2 MHz\n' ...
+                         '3 -    5 MHz\n' ...
+                         '4 -   10 MHz\n' ...
+                         '5 -   20 MHz\n' ...
+                         '6 -   50 MHz\n' ...
+                         'Please provide your option here -- ']);
+            if ~ismember(space, [1 2 3 4 5 6])
+                display('Invalid option! Please try again!');
+            else
+                loop = 0;
+            end
+        end
+    case 2
+        while loop
+            space = input(['Please choose the spacing between segments? \n' ...
+                         '1 -  500 kHz\n' ...
+                         '2 -    2 MHz\n' ...
+                         '3 -    5 MHz\n' ...
+                         '4 -   10 MHz\n' ...
+                         '5 -   20 MHz\n' ...
+                         'Please provide your option here -- ']);
+            if ~ismember(space, [1 2 3 4 5])
+                display('Invalid option! Please try again!');
+            else
+                loop = 0;
+            end
+        end
+    case 3
+        while loop
+            space = input(['Please choose the spacing between segments? \n' ...
+                         '1 -  500 kHz\n' ...
+                         '2 -    2 MHz\n' ...
+                         '3 -    5 MHz\n' ...
+                         '4 -   10 MHz\n' ...
+                         'Please provide your option here -- ']);
+            if ~ismember(space, [1 2 3 4])
+                display('Invalid option! Please try again!');
+            else
+                loop = 0;
+            end
+        end
+    case 4
+        while loop
+            space = input(['Please choose the spacing between segments? \n' ...
+                         '1 -  500 kHz\n' ...
+                         '2 -    2 MHz\n' ...
+                         '3 -    5 MHz\n' ...
+                    'Please provide your option here -- ']);
+            if ~ismember(space, [1 2 3])
+                display('Invalid option! Please try again!');
+            else
+                loop = 0;
+            end
+        end
+end
+
 % mapping = (1:M)*eye(M);
-mapping = mappings{4, 3};
+mapping = mappings{numSegs, space};
 
 synthesis_input = zeros(size(analysis_output));
 synthesis_input(:, mapping(:, 2)) = analysis_output(:, mapping(:, 1));
+
+%synthesis_input = analysis_output;
 
 %% Synthesis Filters
 txwave = polyphaseFBUS(synthesis_input, ff, ds);
@@ -176,10 +287,10 @@ txwave = polyphaseFBUS(synthesis_input, ff, ds);
 if debug && verbose
     figure(4);
     plot(real(txwave));hold on;
-    plot(fir_length+1-ds+(1:length(txsig)), real(txsig), 'r');
+    plot(fir_length+1-ds+(1:length(txsigpad)), real(txsigpad), 'r');
     figure(5);
     plot(imag(txwave));hold on;
-    plot(fir_length+1-ds+(1:length(txsig)), imag(txsig), 'r');
+    plot(fir_length+1-ds+(1:length(txsigpad)), imag(txsigpad), 'r');
 end
 
 %% Spectrum of generated signals
@@ -194,6 +305,30 @@ xlabel('Frequency (MHz)', 'FontSize', fontsz);
 ylabel('Relative PSD Magnitude (dB/Hz)', 'FontSize', fontsz);
 title('Basedband PSD of Fragmented Transmitted Signals', 'FontSize', fontsz); 
 axis([-50, 50, -150, 10]);
+
+%% Receiver NMDFB
+txwavepad = [txwave; zeros(fir_length, 1)];
+rx_analysis_output = polyphaseFBDS(txwavepad, filter_coef, ds, M);
+rx_synthesis_input = zeros(size(rx_analysis_output));
+rx_synthesis_input(:, mapping(:, 1)) = rx_analysis_output(:, mapping(:, 2));
+rxwave = polyphaseFBUS(rx_synthesis_input, ff, ds);
+
+[Pxx, W] = pwelch(rxwave(2*fir_length+1000:end), win, fftsz/2, fftsz, Fs);
+figure(8);
+W = fftshift(W - (W >= Fs/2)*Fs);
+Pxx = 10*log10(Pxx);
+Pxx = fftshift(Pxx - max(Pxx));
+plot(W, Pxx);
+grid on;
+xlabel('Frequency (MHz)', 'FontSize', fontsz);
+ylabel('Relative PSD Magnitude (dB/Hz)', 'FontSize', fontsz);
+title('Basedband PSD of Fragmented Transmitted Signals', 'FontSize', fontsz); 
+axis([-50, 50, -150, 10]);
+
+if debug && verbose
+    
+end
+
 
 %%
 rmpath(libpath);

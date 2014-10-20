@@ -9,7 +9,7 @@ for hh = 1:length(h_fig)
     figure(h_fig(hh));clf;
 end
 
-debug = 1;
+debug = 0;
 verbose = 0;
 datasave = 0;
 txsamplesave = 1;
@@ -161,9 +161,9 @@ for seg = 1:numSegments
                 
                 if txsamplesave
                     filename = ['seg-' num2str(segments(seg)) '_space-' ...
-                        spaceStr{ss} '_bit-' bitsPerSymb, '-', ...
-                        num2str(mc) '.mat'];
-                    save(filename, 'txsig', 'txwave');
+                        spaceStr{ss} '_bit-' num2str(bitsPerSymb), ...
+                        '-', num2str(mc) '.mat'];
+                    save(['./data/' filename], 'txsig', 'txwave');
                 end
 
                 txwavePW = abs(txwave(length_padding+(1:numSymbs*os-100))).^2;
