@@ -30,7 +30,7 @@ function output_bb = polyphaseFBDS(signal, filter_coef, downsampleRate, branches
 
 % by Zhongren Cao 08/12/2014
 
-
+%% Input Check
 if branches < downsampleRate
     error(['The number of polyphase branches must be greater than or ' ...
         'equal to the downsampleRate']);

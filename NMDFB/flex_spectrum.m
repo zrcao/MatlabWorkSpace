@@ -1,4 +1,4 @@
-%% 
+%% Code
 clear *;
 h_fig = findobj(0, 'type', 'figure');
 for hh = 1:length(h_fig)
@@ -11,12 +11,18 @@ addpath(libpath);
 debug = 1;
 verbose = 1;
 fontsz = 14;
+savefigure = 0;
 
 % For pwelch();
 winL = 4096;
 fftsz = winL;
 win = kaiser(winL, 15);
 win = win/sum(win);
+
+%% 
+seg = [2 4 8 13];
+spacing = {'500 kHz', '2 MHz', '5 MHz', '10 MHz', '20 MHz', '50 MHz'};
+qam = {'QPSK', '16QAM', '64QAM', '256QAM', '1024QAM'};
 
 %% QAM Modulation Setup
 loop = 1;
@@ -109,16 +115,16 @@ chosen_filter = hfilt2;
 fir_length = length(chosen_filter);
 fir_halfL = (fir_length-1)/2;
 txsig = conv(chosen_filter, upsample(symbs, os)*os);
-rxsig = conv(chosen_filter, txsig);
+recsig = conv(chosen_filter, txsig);
 if debug && verbose
     figure(102);hold on;
-    plot(real(rxsig));
+    plot(real(recsig));
     plot(length(chosen_filter)-1+(1:os:length(symbs)*os), real(symbs), 'ro');
 
     figure(103);hold on;
     plot(real(symbs), imag(symbs), '+');
-    rxsymbs = rxsig(length(chosen_filter)-1+(1:os:length(symbs)*os));
-    plot(real(rxsymbs), imag(rxsymbs), 'r.');
+    rxsymbs = recsig(length(chosen_filter)-1+(1:os:length(symbs)*os));
+    plot(real(rxsymbs), imag(rxsymbs), 'rx');
 end
 
 txsigPW = abs(txsig).^2;
@@ -189,7 +195,7 @@ plot((-0.5:1/fftsz:0.5-1/fftsz)*M,20*log10(fftshift(abs(fft(ff,fftsz)))), 'r');
 text(1, 5, 'Red: Synthesis Filter', 'FontSize', fontsz, 'Color', 'r');
 
 %% Analysis Filters
-txsigpad = [txsig; zeros(fir_length, 1)];
+txsigpad = [txsig; zeros(2*fir_length, 1)];
 analysis_output = polyphaseFBDS(txsigpad, filter_coef, ds, M);
 
 %% Mapping
@@ -278,7 +284,7 @@ mapping = mappings{numSegs, space};
 synthesis_input = zeros(size(analysis_output));
 synthesis_input(:, mapping(:, 2)) = analysis_output(:, mapping(:, 1));
 
-%synthesis_input = analysis_output;
+synthesis_input = analysis_output;
 
 %% Synthesis Filters
 txwave = polyphaseFBUS(synthesis_input, ff, ds);
@@ -306,12 +312,30 @@ ylabel('Relative PSD Magnitude (dB/Hz)', 'FontSize', fontsz);
 title('Basedband PSD of Fragmented Transmitted Signals', 'FontSize', fontsz); 
 axis([-50, 50, -150, 10]);
 
+%% Trim the signal
+padding = 0*M;
+txtrim = txwave(fir_length+1-ds-padding+(1:(length(txsig)+2*padding)));
+
+[Pxx, W] = pwelch(round(txtrim*10^15)/10^12, win, fftsz/2, fftsz, Fs);
+figure(71);
+W = fftshift(W - (W >= Fs/2)*Fs);
+Pxx = 10*log10(Pxx);
+Pxx = fftshift(Pxx - max(Pxx));
+plot(W, Pxx);
+grid on;
+xlabel('Frequency (MHz)', 'FontSize', fontsz);
+ylabel('Relative PSD Magnitude (dB/Hz)', 'FontSize', fontsz);
+title('Basedband PSD of Fragmented Transmitted Signals', 'FontSize', fontsz); 
+axis([-50, 50, -150, 10]);
+
 %% Receiver NMDFB
-txwavepad = [txwave; zeros(fir_length, 1)];
+txwavepad = [txtrim; zeros(fir_length-1, 1)];
 rx_analysis_output = polyphaseFBDS(txwavepad, filter_coef, ds, M);
 rx_synthesis_input = zeros(size(rx_analysis_output));
 rx_synthesis_input(:, mapping(:, 1)) = rx_analysis_output(:, mapping(:, 2));
+rx_synthesis_input = rx_analysis_output;
 rxwave = polyphaseFBUS(rx_synthesis_input, ff, ds);
+rxtrim = rxwave(fir_length+1-ds+(1:length(txtrim)));
 
 [Pxx, W] = pwelch(rxwave(2*fir_length+1000:end), win, fftsz/2, fftsz, Fs);
 figure(8);
@@ -326,9 +350,27 @@ title('Basedband PSD of Fragmented Transmitted Signals', 'FontSize', fontsz);
 axis([-50, 50, -150, 10]);
 
 if debug && verbose
-    
+    figure(9);
+    plot(real(rxtrim));hold on;
+    plot([1:length(txsig)]+padding, real(txsig), 'm');
+    figure(10);
+    plot(imag(rxtrim));hold on;
+    plot([1:length(txsig)]+padding, imag(txsig), 'm');    
 end
 
+recsig = conv(chosen_filter, rxtrim([1:length(txsig)]+padding));
+finalsymbs = recsig(length(chosen_filter)-1+(1:os:length(symbs)*os));
+hfig = figure(11);
+plot(real(finalsymbs), imag(finalsymbs), 'x');
+xlabel('Real', 'FontSize', fontsz);
+ylabel('Imagery', 'FontSize', fontsz);
+title(['Divided into ' num2str(seg(numSegs)) ' Segments spaced by ' ...
+    spacing{space}], 'FontSize', fontsz);
+if savefigure
+    filename = ['./fig/seg-' num2str(seg(numSegs)), '_space-', ...
+        spacing{space}, '_bit-', num2str(bitsPerSymb), '.pdf'];
+    saveTightFigure(hfig, filename);
+end
 
 %%
 rmpath(libpath);
