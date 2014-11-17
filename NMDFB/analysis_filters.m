@@ -44,7 +44,8 @@ grid on;
 % 1. For a given SINC function cycle, the number of channels doesn't impact
 % the spectrum shape of the resulting prototyping analysis filter against
 % the normalized spectrum, i.e., (-0.5:1/fftsz:0.5-1/fftsz)*M
-
+% 2. In other words, the overlap between two neighboring filters are
+% constant against normalized spectrum
 
 %% Compare the Kaiser Window BETA coefficients
 beta = [1, 5, 10, 15];
