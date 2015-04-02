@@ -23,10 +23,13 @@ for mm = 1:mc
     idx = randi([1, num_rates], num_nodes*(num_nodes-1)/2, 1);
     weights = delay(idx);
 
-    DG =  sparse([s_nodes], [d_nodes], [weights]);
-    %UG = sparse([s_nodes; d_nodes], [d_nodes; s_nodes], [weights; weights]);
-    UG = tril(DG+DG');
+    DG =  sparse([d_nodes], [s_nodes], [weights]);
     %view(biograph(DG, [], 'ShowArrows','off','ShowWeights','on')); 
+    
+    %UG = sparse([s_nodes; d_nodes], [d_nodes; s_nodes], [weights; weights]);
+    %UG = tril(DG+DG');
+    UG = DG+DG';
+    full_UG = full(UG);
 
     iter = 0;
     old_relay_pool =[];
@@ -41,26 +44,46 @@ for mm = 1:mc
             num_relay = length(relay_pool);
             val = zeros(num_relay, 1);
             for ii = 1:num_relay
-                val(ii) = DG(1, ii);
+                val(ii) = full_UG(1, relay_pool(ii));
             end
             new_weight=max(val);
             if min(val)== new_weight
                 hop1_converged=1;
             else
                 for ii = 1:num_relay
-                    DG(1,ii) = new_weight; 
+                    DG(relay_pool(ii), 1) = new_weight; 
                 end
                 old_relay_pool = relay_pool;
+                UG = DG+DG';
+                full_UG = full(UG);
             end
         end
     end
     hop1_iterates(mm) = iter;
     
+    paths = graphpred2path(pred, [2:num_nodes]);
+    pathhops = zeros(num_nodes-1, 1);
+    for ii = 1:num_nodes-1
+        pathhops(ii) = length(paths{1})-1;
+    end
+    max_hops(mm) = max(pathhops);
+    
+    
+end
+    
     hop2_converged = 0;
     while ~hop2_converged
         hop2_nodes = find(pred~=1 & pred~=0);
         num_hop2_nodes = length(hop2_nodes);
-        val = zeros(num_hop2_nodes);
+        relays = [];
+        for hh = 1:num_hop2_nodes;
+            if ~ismember(pred(hop2_nodes(hh)), relays)
+                relays = [relays; pred(hop2_nodes(hh))];
+            end
+        end
+        relays = sort(relays);
+        
+        val = zeros(num_hop2_nodes, 1);
         for ii = 1:hop2_nodes
             idx1 = min(hop2_nodes(ii), pred(hop2_nodes(ii)));
             idx2 = max(hop2_nodes(ii), pred(hop2_nodes(ii)));
@@ -79,11 +102,6 @@ for mm = 1:mc
     end
     
     
-    paths = graphpred2path(pred, [2:num_nodes]);
-    pathhops = zeros(num_nodes-1, 1);
-    for ii = 1:num_nodes-1
-        pathhops(ii) = length(paths{1})-1;
-    end
-    max_hops(mm) = max(pathhops);
-end
+
+
 
