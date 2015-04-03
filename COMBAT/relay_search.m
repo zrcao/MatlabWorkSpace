@@ -128,6 +128,7 @@ for mm = 1:mc
     if length(maxpath)<3
         finished = 1;
     end
+    [dist; pred]
     
     iter =0;
     hop2_converged = 0;
@@ -143,6 +144,7 @@ for mm = 1:mc
                 zishop = [relay_pool(rr) node_pool(tt)];
                 hops = [hops; zishop];
                 val = [val; full_UG(zishop(1), zishop(2))];
+                DG(node_pool(tt), 1) = 10;
             end
         end
         [max23Delay, pairIdx] = max(val);
