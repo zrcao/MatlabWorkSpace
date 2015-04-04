@@ -5,7 +5,7 @@ rates = [6 9 12 18 24 36 48 54];
 num_rates = length(rates);
 delay = 1./rates;
 
-num_nodes = 13;
+num_nodes = 10;
 s_nodes=[];
 d_nodes = [];
 % In the sparse graph setup, the destination nodes are always larger than
@@ -20,8 +20,7 @@ end
 s_nodes(end) = num_nodes;
 d_nodes(end) = num_nodes-1;
 
-mc = 1000;
-
+mc = 5000;
 hop1_iterates = zeros(mc, 1);
 hop1_noswitch = zeros(mc, 1);
 hop2_iterates = zeros(mc, 1);
@@ -31,31 +30,21 @@ num_bins = 6;
 num_hops = zeros(mc, num_bins);
 
 for mm = 1:mc 
-    % Generate the graph for this run
     idx = randi([1, num_rates], num_nodes*(num_nodes-1)/2, 1);
     weights = delay(idx);
-    edges = [d_nodes s_nodes weights'];
-    multicastsource = randi([1, num_nodes], 1);
     
+    connections = [d_nodes s_nodes weights];
+    DG =  sparse([d_nodes], [s_nodes], [weights]);
+    init_DG = DG;
+    %view(biograph(DG, [], 'ShowArrows','off','ShowWeights','on')); 
+    
+    %UG = sparse([s_nodes; d_nodes], [d_nodes; s_nodes], [weights; weights]);
+    %UG = tril(DG+DG');
+    UG = DG+DG';
+    full_UG = full(UG);
     finished = 0;
-    relay_nodes = multicastsource;
-    tbd_nodes = 1:num_nodes;
-    pos = find(tbd_nodes == multicastsource);
-    tbd_nodes(pos) = [];
-    frozen_nodes = [];
 
-    stage = 0;
-    while ~finished
-        stage = stage+1;
-        [frozen_nodes, relay_nodes, tbd_nodes, edges] = combat_search...
-            (frozen_nodes, relay_nodes, tbd_nodes, edges, multicastsource);
-        
-        if isempty(tbd_nodes) 
-            finished = 1;
-        end
-    end
-end
-    
+    iter = 0;
     noswitch = 0;
     old_relay_pool =[];
     hop1_converged = 0;
@@ -241,7 +230,7 @@ end
     
     max_hops(mm) = max(pathhops);
     max_dist(mm) = max(maxdist);
-
+end
 
 
 
