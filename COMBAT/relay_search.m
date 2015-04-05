@@ -20,8 +20,7 @@ end
 %s_nodes(end) = num_nodes;
 %d_nodes(end) = num_nodes-1;
 
-mc = 100;
-
+mc = 50000;
 
 max_hops = zeros(mc, 1);
 max_dist = zeros(mc, 1);
@@ -68,21 +67,70 @@ for mm = 1:mc
     num_hops(mm, :) = hist(pathhops, 0:num_bins);   
 end
 
-num_bins = 6;
-figure(1);
-num_hops = num_hops(:, 2:end);
-hop_distribution = sum(num_hops, 1);
+hop_distribution = sum(num_hops(:, 2:end), 1); 
+% Above, the first column is the multicastsource itself.
 hop_percentage = hop_distribution/sum(hop_distribution);
+frame_hist = hist(max_hops, 0:num_bins);
+frame_percentage = frame_hist(2:end)/mc;
 
-figure(2);
+rate_bins  = 5:0.1:30;
+rate_hist = hist(1./max_dist, rate_bins)/mc;
 
+%% Save results
+filename = 'relay_search.mat';
+save(filename);
 
+%% Plots
+fontsz = 14;
 
+h1=figure(1);
+fh = bar(1:num_bins, [hop_percentage; frame_percentage]');
+set(fh(2), 'FaceColor', 'm', 'LineStyle', ':');
+haxes = gca;
+set(haxes, 'XLim', [0 7]);
+set(haxes, 'XTickLabel', {'1', '2', '3', '4', '5', '6', ''}, 'FontSize', fontsz);
+xlabel('Number of Cooperative Hops', ...
+    'FontSize', fontsz+2, 'FontWeight','bold');
+set(haxes, 'YLim', [0, 0.7]);
+set(haxes, 'YTick', [0:0.1:0.7]);
+set(haxes, ...
+    'YTickLabel', {'0', '10%', '20%', '30%', '40%', '50%', '60%', '70%'}, ...
+    'FontSize', fontsz);
+ylabel(haxes, 'Percentage', 'FontSize', fontsz+2, 'FontWeight','bold');
+title('Distribution of Hops in a Squad Network', 'FontSize', fontsz+2, ...
+    'FontWeight','bold');
+lh = legend('Hops of individual nodes', 'Hops of MAC frames');
+set(lh, 'FontSize', fontsz+2);
+saveTightFigure(h1, 'percent_hops.pdf');
 
+h2=figure(2);
+ratecdf = cumsum(rate_hist);
+plot(rate_bins, ratecdf, 'LineWidth', 2); hold on;
+wificdf = zeros(size(rate_bins));
+pos =  find(rate_bins==6);
+wificdf(pos:end) = 1;
+plot(rate_bins, wificdf, 'r--', 'LineWidth',2);
+haxes = gca;
+set(haxes, 'XLim', [4,28]);
+set(haxes, 'XTick', 4:2:28);
+%set(haxes, 'XTickLabel', {'6', '10', '14', '18', '22', '26'}, ... 
+%    'FontSize', fontsz);
+xlabel('Link Layer Multicast Data Rate (Mbps)', 'FontWeight','bold', ...
+    'FontSize', fontsz+2);
+set(haxes, 'YLim', [0, 1.02]);
+set(haxes, 'YTick', 0:0.1:1);
+set(haxes, 'YTickLabel', {'0', '10%', '20%', '30%', '40%', '50%', ...
+    '60%', '70%', '80%', '90%', '100%'}, 'FontSize', fontsz);
+ylabel('Cumulative Percentage', 'FontWeight','bold', ...
+    'FontSize', fontsz+2);
+title('Cumulative Distribution of Link Layer Rate',  'FontSize', fontsz+2, ...
+    'FontWeight', 'bold');
+ll = legend('COMBAT Approach', 'Base Rate Approach', 'Location', 'SouthEast');
+set(ll, 'FontSize', fontsz+2);
+grid on;
+saveTightFigure(h2, 'link_rate.pdf');
 
-
-
-
+hold off;
 
 
 
