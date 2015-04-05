@@ -55,7 +55,7 @@ while ~hop_converged
             cc = cc + 1;
             zishop = [relay_nodes(rr) node_pool(tt)];
             hops(cc,:) = zishop;
-            hopWeights(cc) = findEdgeWeight(edges, zishop, num_nodes);
+            hopWeights(cc) = getEdgeWeight(edges, zishop);
             if maxpathflag && (node_pool(tt) == maxpathdst)
                 maxpathHopWeight = hopWeights(cc);
             end
@@ -73,6 +73,7 @@ while ~hop_converged
         hop_converged = 1;
     else
         copy_weight = 1;
+
         if maxpathHopWeight~=maxHopWeight
             % If the longest path's hop weight does not have the 
             % lowest rate (i.e., maxHopWeight) among all hop weights,
@@ -80,7 +81,7 @@ while ~hop_converged
             % use maxpath(2) as its relay. It can as long as the
             % longest delay path doesn't change or the new longest
             % path has less penalty.
-            edges_tmp = removeEdges(edges, maxhop, num_nodes);
+            edges_tmp = removeEdge(edges, maxhop);
             DG_tmp=sparse(edges_tmp(:, 1), edges_tmp(:,2), ...
                 edges_tmp(:,3), num_nodes, num_nodes);
             [dist_tmp,route_tmp,pred_tmp] = ...
@@ -97,7 +98,7 @@ while ~hop_converged
 
         if copy_weight
             for hh=1:cc
-                edges = setEdges(edges, hops(hh, :), num_nodes, maxHopWeight);
+                edges = setEdge(edges, hops(hh, :), maxHopWeight);
             end
         end
         old_hops = hops;
@@ -105,6 +106,7 @@ while ~hop_converged
 end
 
 old_relay_nodes = relay_nodes;
+
 relay_nodes = hops(:, 2);
 % Eliminate the new relay nodes from the tbd_nodes
 for rr=1:length(relay_nodes)
@@ -117,9 +119,22 @@ end
 for tt = 1:length(tbd_nodes)
     for rr = 1:length(old_relay_nodes)
         zishop = [tbd_nodes(tt), old_relay_nodes(rr)];
-        edges = removeEdges(edges, zishop, num_nodes);
+        edges = removeEdge(edges, zishop);
     end
 end
+
+% Remove unused edge between old_relay_nodes and new relay_nodes
+for rr = 1:length(old_relay_nodes)
+    for nn = 1:length(relay_nodes)
+        cond = (hops(:,1)==old_relay_nodes(rr)) & ...
+            (hops(:, 2) == relay_nodes(nn));
+        if isempty(find(cond, 1))
+            zisedge = [old_relay_nodes(rr) relay_nodes(nn)];
+            edges = removeEdge(edges, zisedge);
+        end
+    end
+end
+
 % Put the old_relay_nodes to the frozen_nodes
 frozen_nodes = [frozen_nodes; old_relay_nodes];
 
@@ -127,35 +142,29 @@ frozen_nodes = [frozen_nodes; old_relay_nodes];
 for rr=1:(length(relay_nodes)-1)
     for nn = (rr+1):length(relay_nodes)
         zishop = [relay_nodes(rr) relay_nodes(nn)];
-        edges = removeEdges(edges, zishop, num_nodes);
+        edges = removeEdge(edges, zishop);
     end
 end
 
 end % END OF FUNCTION
 
-function edges = removeEdges(edges, hop, num_nodes)
-    thisidx = findEdge(edges, hop, num_nodes);
+function edges = removeEdge(edges, hop)
+    thisidx = findEdge(edges, hop);
     edges(thisidx, :) = [];
 end
 
 
-function edges = setEdges(edges, hop, num_nodes, weight)
-    thisidx = findEdge(edges, hop, num_nodes);
+function edges = setEdge(edges, hop, weight)
+    thisidx = findEdge(edges, hop);
     edges(thisidx, 3) = weight;
 end
 
-function weight = findEdgeWeight(edges, hop, num_nodes)
-    thisidx = findEdge(edges, hop, num_nodes);
+function weight = getEdgeWeight(edges, hop)
+    thisidx = findEdge(edges, hop);
     weight = edges(thisidx, 3);
 end
 
-function thisidx = findEdge(edges, hop, num_nodes)
+function thisidx = findEdge(edges, hop)
 % This function returns the row index of the hop in the edge matrix
-    cond = (isequal(hop, [num_nodes-1, num_nodes])) || ...
-        (isequal(hop, [num_nodes, num_nodes-1]));
-    if ~cond
-        thisidx = find((edges(:,1)==max(hop))&(edges(:,2)==min(hop)));
-    else
-        thisidx = find((edges(:,1)==num_nodes-1)&(edges(:,2)==num_nodes));
-    end
+    thisidx = find((edges(:,1)==max(hop))&(edges(:,2)==min(hop)));
 end
