@@ -81,15 +81,15 @@ filename = 'relay_search.mat';
 save(filename);
 
 %% Plots
-fontsz = 14;
+fontsz = 18;
 
 h1=figure(1);
 fh = bar(1:num_bins, [hop_percentage; frame_percentage]');
 set(fh(2), 'FaceColor', 'm', 'LineStyle', ':');
 haxes = gca;
-set(haxes, 'XLim', [0 7]);
-set(haxes, 'XTickLabel', {'1', '2', '3', '4', '5', '6', ''}, 'FontSize', fontsz);
-xlabel('Number of Cooperative Hops', ...
+set(haxes, 'XLim', [0 6]);
+set(haxes, 'XTickLabel', {'1', '2', '3', '4', '5', ''}, 'FontSize', fontsz);
+xlabel('Number of COMBAT Transmission Hops', ...
     'FontSize', fontsz+2, 'FontWeight','bold');
 set(haxes, 'YLim', [0, 0.7]);
 set(haxes, 'YTick', [0:0.1:0.7]);
@@ -97,9 +97,9 @@ set(haxes, ...
     'YTickLabel', {'0', '10%', '20%', '30%', '40%', '50%', '60%', '70%'}, ...
     'FontSize', fontsz);
 ylabel(haxes, 'Percentage', 'FontSize', fontsz+2, 'FontWeight','bold');
-title('Distribution of Hops in a Squad Network', 'FontSize', fontsz+2, ...
+title('Distribution of COMBAT Transmission Hops', 'FontSize', fontsz+2, ...
     'FontWeight','bold');
-lh = legend('Hops of individual nodes', 'Hops of MAC frames');
+lh = legend('Hops of Individual Nodes', 'Hops of Multicast Sessions');
 set(lh, 'FontSize', fontsz+2);
 saveTightFigure(h1, 'percent_hops.pdf');
 
@@ -123,7 +123,7 @@ set(haxes, 'YTickLabel', {'0', '10%', '20%', '30%', '40%', '50%', ...
     '60%', '70%', '80%', '90%', '100%'}, 'FontSize', fontsz);
 ylabel('Cumulative Percentage', 'FontWeight','bold', ...
     'FontSize', fontsz+2);
-title('Cumulative Distribution of Link Layer Rate',  'FontSize', fontsz+2, ...
+title('Cumulative Distribution of Multicast Data Rate',  'FontSize', fontsz+2, ...
     'FontWeight', 'bold');
 ll = legend('COMBAT Approach', 'Base Rate Approach', 'Location', 'SouthEast');
 set(ll, 'FontSize', fontsz+2);
