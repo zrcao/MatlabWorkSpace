@@ -13,5 +13,5 @@
 clear *;
 megaMillionCell = MegaMillion();
 %megaMillionCell.addNewDraw(2013, 11, 1, [32	35	49	62	67], 1, 5);
-megaMillionCell.addNewDraw(2013, 11, 5, [2	11	42	64	74], 2, 5);
-megaMillionCell.savedata();
+%megaMillionCell.addNewDraw(2013, 11, 5, [2	11	42	64	74], 2, 5);
+%megaMillionCell.savedata();
