@@ -40,12 +40,29 @@ sinc_hb_period = 16;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 par.txcorrmatrix = 1;
 par.rxcorrmatrix = 1;
-maxPathDelay = 4e-6; % Seconds
-par.pathdelay = 0:(1/Fs):maxPathDelay;
-minPathGain = -30; % dB
+maxPathDelay = 10e-8; % Seconds
+minPathGain = -20; % dB
 pathdecay_coeff = (minPathGain/10)*log(10)/maxPathDelay;
-decay_profile = exp(pathdecay_coeff*par.pathdelay);
-par.avgPathGains = 10*log10(decay_profile);
+
+channel_case = 1;
+switch channel_case
+    case 1
+        par.pathdelay = [0 110 190 410]*1e-9;
+        par.avgPathGains = [0 -9.7 -19.2 -22.8];
+    case 2
+        par.pathdelay = [0 310 710 1090 1730 2510]*1e-9;
+        par.avgPathGains = [0 -1 -9 -10 -15 -20];
+    case 3
+        par.pathdelay = [0 200 800 1200 2300 3700]*1e-9;
+        par.avgPathGains = [0 -0.9 -4.9 -8.0 -7.8 -23.9];
+    otherwise
+        par.pathdelay = [0:1/Fs:maxPathDelay];
+        %par.pathdelay = [0:3/Fs:9/Fs];
+        decay_profile = exp(pathdecay_coeff*par.pathdelay);
+        par.avgPathGains = 10*log10(decay_profile);
+end
+
+
 
 %% Generate the channel
 H = comm.MIMOChannel('TransmitCorrelationMatrix', par.txcorrmatrix, ...
@@ -67,14 +84,17 @@ if debug
     xlabel('Frequency (MHz)', 'FontSize', fontsz);
     ylabel('Magnitude (dB/Hz)', 'FontSize', fontsz);
     title('Pulse Shaping Filter for Waveform Generation', 'FontSize', fontsz);
+    hold off;
 end
              
-ch = step(H, [hf2; zeros(800-length(hfilt2), 1)]);
+ch = step(H, [hfilt2'; zeros(800-length(hfilt2), 1)]);
 
 if debug
-    plot((-0.5:1/fftsz:(0.5-1/fftsz))*M, 20*log10(abs(...
+    figure(2);%subplot(3,1,1);
+    scale = M;
+    plot((-0.5:1/fftsz:(0.5-1/fftsz))*scale, 20*log10(abs(...
         fftshift(fft(ch, fftsz)))));
-    axis([-20, -15, -40, 10]);
+    axis([-0.5*scale, 0.5*scale, -80, 20]);
 end
 
 %%
